@@ -4,9 +4,13 @@ import "./App.css";
 import Companies from "./Companies";
 import Pagination from "./Pagination";
 import axios from "axios";
+import Stats from "./Stats";
+import "bootstrap/dist/css/bootstrap.css";
 
 const App = () => {
   const [companies, setCompanies] = useState([]);
+  const [filteredCompanies, setFilteredCompanies] = useState([]);
+  const [statistick, setStatistick] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [companiesPerPage] = useState(10);
@@ -36,14 +40,13 @@ const App = () => {
       );
 
       data.sort(function (a, b) {
-        if (a.total == b.total) return 0;
+        if (a.total === b.total) return 0;
         if (a.total < b.total) return -1;
         if (a.total > b.total) return 1;
       });
 
-      console.log(data);
-
       setCompanies(data);
+      setFilteredCompanies(data);
       setLoading(false);
     }
 
@@ -52,7 +55,7 @@ const App = () => {
 
   const indexOfLastCompanies = currentPage * companiesPerPage;
   const indexOfFirstCompanies = indexOfLastCompanies - companiesPerPage;
-  const currentCompanies = companies.slice(
+  const currentCompanies = filteredCompanies.slice(
     indexOfFirstCompanies,
     indexOfLastCompanies
   );
@@ -60,15 +63,71 @@ const App = () => {
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const getfilteredCompanies = (input) => {
+    return companies.filter((company) =>
+      company.name.toLowerCase().includes(input.toLowerCase())
+    );
+  };
+
+  const handleChangeName = (e) => {
+    setFilteredCompanies(companies);
+    const input = e.target.value;
+    const filteredCompanies = getfilteredCompanies(input);
+    setFilteredCompanies(filteredCompanies);
+  };
+
+  const handleOpenStats = (incomes) => {
+    const statsCollector = () => {
+      return <Stats data={incomes} />;
+    };
+    setStatistick(statsCollector);
+  };
+  const handleCloceStats = () => {
+    setStatistick([]);
+  };
+
   return (
-    <div className="container mt-1">
-      <h2 className="text-primary mb-1">My Blog</h2>
-      <Companies companies={currentCompanies} loading={loading} />
-      <Pagination
-        companiesPerPage={companiesPerPage}
-        totalCompanies={companies.length}
-        paginate={paginate}
-      />
+    <div id="main">
+      {/* <div className="container">
+        <input className="center" type="text" onChange={handleChangeName} />
+      </div> */}
+      <div className="container input-group input-group-sm mb-3">
+        <div className="input-group-prepend">
+          <span className="input-group-text">Filter</span>
+        </div>
+        <input
+          type="text"
+          className="form-control"
+          aria-label="Small"
+          aria-describedby="inputGroup-sizing-sm"
+          onChange={handleChangeName}
+        />
+      </div>
+
+      <div className="container mt-1">
+        <Companies
+          companies={currentCompanies}
+          loading={loading}
+          click={handleOpenStats}
+        />
+        <Pagination
+          dataPerPage={companiesPerPage}
+          totalData={filteredCompanies.length}
+          paginate={paginate}
+        />
+      </div>
+      {statistick.length !== 0 ? (
+        <div className="fixed">
+          {statistick}
+          <button
+            type="button"
+            className="close btnFixed"
+            onClick={handleCloceStats}
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };
